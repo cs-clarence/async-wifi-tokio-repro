@@ -16,10 +16,10 @@ fn send_future<F: Future<Output = ()> + Send + 'static>(
 }
 
 async fn async_main() -> anyhow::Result<()> {
-    let periphs = Peripherals::take().expect("Failed to take peripherals");
-    let sysloop = EspSystemEventLoop::take().expect("Failed to take system event loop");
-    let nvs = EspDefaultNvsPartition::take().expect("Failed to take NVS partition");
-    let event_loop = EspEventLoop::take().expect("Failed to take event loop");
+    let periphs = Peripherals::take()?;
+    let sysloop = EspSystemEventLoop::take()?;
+    let nvs = EspDefaultNvsPartition::take()?;
+    let event_loop = EspEventLoop::take()?;
     let timer_service = EspTimerService::new()?;
 
     let wifi = EspWifi::new(periphs.modem, sysloop, Some(nvs))?;
