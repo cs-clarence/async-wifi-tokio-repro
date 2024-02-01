@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use esp_idf_svc::{
     eventloop::{EspEventLoop, EspSystemEventLoop},
     hal::peripherals::Peripherals,
@@ -5,6 +7,13 @@ use esp_idf_svc::{
     timer::EspTimerService,
     wifi::{AsyncWifi, EspWifi},
 };
+
+/// Just to check if it's not just the [`tokio::spawn`] that's causing the compile error
+fn send_future<F: Future<Output = ()> + Send + 'static>(
+    f: F,
+) -> impl Future<Output = ()> + Send + 'static {
+    f
+}
 
 async fn async_main() -> anyhow::Result<()> {
     let periphs = Peripherals::take().expect("Failed to take peripherals");
@@ -17,9 +26,13 @@ async fn async_main() -> anyhow::Result<()> {
 
     let mut wifi = AsyncWifi::wrap(wifi, event_loop, timer_service)?;
 
-    tokio::task::spawn(async move {
-        wifi.start().await.expect("Failed to start wifi");
-    });
+    let fut = async move {
+        wifi.connect().await.expect("Failed to start wifi");
+    };
+
+    tokio::task::spawn(fut);
+
+    send_future(fut);
 
     Ok(())
 }
